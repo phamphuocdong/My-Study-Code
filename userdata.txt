@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#Update software on the instance
+sudo yum update -y
+
+#Install Apache web server
+sudo yum install -y httpd
+
+#Start the web server
+sudo systemctl start httpd
+
+#Enable the web server to start when ever system boost
+sudo systemctl enable httpd

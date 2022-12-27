@@ -11,8 +11,8 @@ echo "Instance Type: "$instanceType
 #Create VPC
 aws ec2 create-vpc \
     --cidr-block 10.0.0.0/16 --region $region \
-    --tag-specification 'ResourceType=vpc,Tags=[{Key=Name,Value=TaskBVpc}]'
-vpc=$(aws ec2 describe-vpcs --region $region --filters 'Name=tag:Name,Values=TaskBVpc' --query 'Vpcs[*].VpcId')
+    --tag-specification 'ResourceType=vpc,Tags=[{Key=Name,Value=TaskBVpc}]' 
+vpc=$(aws ec2 describe-vpcs --region $region --filters 'Name=tag:Name,Values=TaskBVpc' --query 'Vpcs[*].VpcId' --output text)
 echo "VPC: "$vpc
 
 #Create subnet
@@ -22,7 +22,20 @@ aws ec2 create-subnet \
     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=TaskB-Public-Subnet}]'
 #Assign subnet id to a variable
 subnet=$(aws ec2 describe-subnets --filters 'Name=tag:Name,Values=TaskB-Public-Subnet' --query Subnets[].SubnetId --output text)
-echo "VPC: "$vpc
+echo "Subnet: "$subnet
+
+#Create internet gateway
+aws ec2 create-internet-gateway --region $region \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=TaskB-Igw}]'
+igw=$(aws ec2 describe-internet-gateways --filters 'Name=tag:Name,Values=TaskB-Igw' --query InternetGateways[].InternetGatewayId --output text --region $region)
+
+#Attach IGW to VPC
+aws ec2 attach-internet-gateway --internet-gateway-id $igw --vpc-id $vpc --region $region
+
+#Create route table
+aws ec2 create-route-table --vpc-id $vpc --region $region \
+    --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=TaskB-Public-Route-Table}]'
+routeTable=$(aws ec2 describe-internet-gateways --filters 'Name=tag:Name,Values=TaskB-Igw' --query InternetGateways[].InternetGatewayId --output text --region $region)
 
 #Create security group
 echo "Creating a new security group..."
@@ -49,7 +62,10 @@ aws ec2 authorize-security-group-ingress \
 --region $region
 
 #Create instance key pair
-aws ec2 create-key-pair --key-name taskBKey --key-format ppk
+echo "Creating a key pair"
+aws ec2 create-key-pair --key-name taskBKey --region us-east-1
+key=$(aws ec2 describe-key-pairs --region us-east-1 | grep taskBKey | cut -d '"' -f4 )
+echo "Key pair: "$key
 
 #Create ec2 instance
 aws ec2 run-instances \
