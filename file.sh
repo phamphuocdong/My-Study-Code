@@ -7,6 +7,11 @@ region="us-east-1"
 echo "Region: "$region
 instanceType="t2.micro"
 echo "Instance Type: "$instanceType
+imageId=$(aws ssm get-parameters \
+--names '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2' \
+--region $region | grep ami- | cut -d '"' -f4 | sed -n 2p)
+echo "Image id: "$ami
+
 
 #Create VPC
 aws ec2 create-vpc \
@@ -21,7 +26,7 @@ aws ec2 create-subnet \
     --cidr-block 10.0.0.0/24 \
     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=TaskB-Public-Subnet}]'
 #Assign subnet id to a variable
-subnet=$(aws ec2 describe-subnets --filters 'Name=tag:Name,Values=TaskB-Public-Subnet' --query Subnets[].SubnetId --output text)
+subnet=$(aws ec2 describe-subnets --filters 'Name=tag:Name,Values=TaskB-Public-Subnet' --query Subnets[].SubnetId --output text --region $region)
 echo "Subnet: "$subnet
 
 #Create internet gateway
@@ -35,7 +40,11 @@ aws ec2 attach-internet-gateway --internet-gateway-id $igw --vpc-id $vpc --regio
 #Create route table
 aws ec2 create-route-table --vpc-id $vpc --region $region \
     --tag-specifications 'ResourceType=route-table,Tags=[{Key=Name,Value=TaskB-Public-Route-Table}]'
-routeTable=$(aws ec2 describe-internet-gateways --filters 'Name=tag:Name,Values=TaskB-Igw' --query InternetGateways[].InternetGatewayId --output text --region $region)
+routeTable=$(aws ec2 describe-route-tables --filters 'Name=tag:Name,Values=TaskB-Public-Route-Table' --query RouteTables[].RouteTableId --output text --region $region)
+#Route internet gateway
+aws ec2 create-route --route-table-id $routeTable --destination-cidr-block 0.0.0.0/0 --gateway-id $igw --region us-east-1
+#Associate subnet
+aws ec2 associate-route-table --route-table-id $routeTable --subnet-id $subnet --region $region
 
 #Create security group
 echo "Creating a new security group..."
@@ -69,6 +78,7 @@ echo "Key pair: "$key
 
 #Create ec2 instance
 aws ec2 run-instances \
+--image-id $imageId \
 --count 1 \
 --instance-type $instanceType \
 --region $region \
@@ -76,4 +86,5 @@ aws ec2 run-instances \
 --security-group-ids $securityGroup \
 --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=mompopcafeserver}]' \
 --associate-public-ip-address \
---user-data file://taskBUserdata.txt
+--key-name $key \
+--user-data file://taskBUserData.txt
