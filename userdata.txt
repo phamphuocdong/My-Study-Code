@@ -13,6 +13,10 @@ sudo systemctl start httpd
 sudo systemctl enable httpd
 
 # Go to html directory
-cd 
-touch index.html
-echo "<h1>Hello from Dong</h1>" > /var/www/html/index.html
+cd /var/www/html
+
+#Install the static website source code
+sudo wget https://publicsourcecodefordownloading.s3.amazonaws.com/StaticWeb.zip
+
+#Unzip the code
+sudo unzip StaticWeb.zip
