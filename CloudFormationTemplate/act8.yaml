@@ -1,0 +1,394 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC with an Amazon Linux LAMP instance in a public subnet
+Parameters:
+  VPCCIDR:
+    Description: CIDR Block for MomPopVPC
+    Type: String
+    Default: 10.200.0.0/20
+    AllowedValues:
+    - 10.200.0.0/20
+  PublicSubnet1Param:
+    Description: Public Subnet 1
+    Type: String
+    Default: 10.200.0.0/24
+    AllowedValues:
+    - 10.200.0.0/24
+  KeyName:
+    Type: String
+    Description: Keyname for the keypair that Qwiklab will use
+    Default: lab-key-pair
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMI: ami-04bfee437f38a691e
+    us-west-2:
+      AMI: ami-0385455dc2b1498ef
+    eu-west-2:
+      AMI: ami-0c43b7237335a64a8
+Resources:
+
+#VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock:
+        Ref: VPCCIDR
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: VPC
+        Value: MomPopCafe
+      - Key: Name
+        Value: MomPopCafe VPC
+
+#IGW
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+    - VPC
+    - InternetGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+
+#Public subnet
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPC
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Ref: PublicSubnet1Param
+      AvailabilityZone:
+        Fn::Select:
+        - '0'
+        - Fn::GetAZs: ''
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+      - Key: Name
+        Value: MomPopCafe Public Subnet 1
+
+#Public route table 
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+    - VPC
+    - AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: Public Route Table
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+    - VPC
+    - PublicRouteTable
+    - InternetGateway
+    - AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  
+  #Associate public subnet to route table
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+    - PublicRouteTable
+    - PublicSubnet1
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet1
+      RouteTableId:
+        Ref: PublicRouteTable
+  
+  NATGateway:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+        - EIP
+        - AllocationId
+      SubnetId:
+        Ref: PublicSubnet1
+  EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      
+  MomPopCafeInstance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+    - VPC
+    - MomPopCafeSecurityGroup
+    - PublicSubnet1
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionToAMI
+        - Ref: AWS::Region
+        - AMI
+      KeyName:
+        Ref: KeyName
+      IamInstanceProfile:
+        Ref: MomPopInstanceProfile
+      InstanceType: t2.small
+      NetworkInterfaces:
+      - DeviceIndex: '0'
+        AssociatePublicIpAddress: 'true'
+        SubnetId:
+          Ref: PublicSubnet1
+        GroupSet:
+        - Ref: MomPopCafeSecurityGroup
+      SourceDestCheck: 'false'
+      Tags:
+      - Key: Name
+        Value: MomPopCafeInstance
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash -ex \n"
+            - "yum -y update \n"
+            - "amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2 \n"
+            - "yum -y install httpd mariadb-server wget \n"
+            - "systemctl enable httpd \n"
+            - "systemctl start httpd \n"
+            - "systemctl enable mariadb \n"
+            - "systemctl start mariadb \n"
+            - "echo '<html><h1>Hello From Your Web Server!</h1></html>' > /var/www/html/index.html
+              \n"
+            - "find /var/www -type d -exec chmod 2775 {} \\; \n"
+            - "find /var/www -type f -exec chmod 0664 {} \\; \n"
+            - "echo \"<?php phpinfo(); ?>\" > /var/www/html/phpinfo.php \n"
+            - "usermod -a -G apache ec2-user \n"
+            - "chown -R ec2-user:apache /var/www \n"
+            - "chmod 2775 /var/www \n"
+            - "wget https://aws-tc-largeobjects.s3-us-west-2.amazonaws.com/CUR-TF-200-RESOPS/activity6vocareum/momPopSetup.tar.gz
+              \n"
+            - "tar -zxvf momPopSetup.tar.gz \n"
+            - "wget https://aws-tc-largeobjects.s3-us-west-2.amazonaws.com/CUR-TF-200-RESOPS/activity6vocareum/momPopDb.tar.gz
+              \n"
+            - "tar -zxvf momPopDb.tar.gz \n"
+            - "wget https://aws-tc-largeobjects.s3-us-west-2.amazonaws.com/CUR-TF-200-RESOPS/activity6vocareum/mompopcafe.tar.gz
+              \ \n"
+            - "tar -zxvf mompopcafe.tar.gz -C /var/www/html/ \n"
+            - "cd momPopSetup \n"
+            - "./set-app-parameters.sh \n"
+            - "cd ../momPopDb/ \n"
+            - "./set-root-password.sh \n"
+            - "./create-db.sh \n"
+  IamPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: FullSsmAccess
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - ssm:*
+          Resource: "*"
+      Roles:
+      - Ref: MomPopIamRole
+  MomPopIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+  MomPopInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn:
+    - MomPopIamRole
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: MomPopIamRole
+  MomPopCafeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: VPC
+    Properties:
+      GroupDescription: Security group for the MomPopCafe instance
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: MomPopCafeSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: '0'
+        ToPort: '65535'
+        CidrIp: 0.0.0.0/0
+  CliHostInstance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+    - VPC
+    - CliHostInstanceSG
+    - PublicSubnet1
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionToAMI
+        - Ref: AWS::Region
+        - AMI
+      KeyName:
+        Ref: KeyName
+      InstanceType: t2.micro
+      NetworkInterfaces:
+      - DeviceIndex: '0'
+        AssociatePublicIpAddress: 'true'
+        SubnetId:
+          Ref: PublicSubnet1
+        GroupSet:
+        - Ref: CliHostInstanceSG
+      SourceDestCheck: 'false'
+      Tags:
+      - Key: Name
+        Value: CLI Host
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash -ex \n"
+            - "yum -y update \n"
+            - "yum install -y wget \n"
+            - "mkdir /home/ec2-user/activity-files \n"
+            - "chown ec2-user:ec2-user /home/ec2-user/activity-files \n"
+  CliHostInstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: VPC
+    Properties:
+      GroupDescription: Security group for the CLI Host Linux instance
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: CLI Host SG
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: "-1"
+        FromPort: '0'
+        ToPort: '65535'
+        CidrIp: 0.0.0.0/0
+  IAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: awsstudent
+  IAMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    DependsOn: IAMUser
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - ec2:*
+          - cloudformation:*
+          - cloudwatch:*
+          Effect: Allow
+          Resource: "*"
+        - Action:
+          - ec2:RunInstances
+          Effect: Deny
+          Resource: arn:aws:ec2:*:*:instance/*
+          Condition:
+            StringNotEquals:
+              ec2:InstanceType:
+              - t2.micro
+              - t2.small
+        - Resource: "*"
+          Action:
+          - ec2:*Spot*
+          - ec2:*ReservedInstances*
+          Effect: Deny
+        - Action:
+          - ec2:StartInstances
+          Effect: Deny
+          Resource: arn:aws:ec2:*:*:instance/*
+          Condition:
+            StringNotEquals:
+              ec2:InstanceType:
+              - t2.micro
+              - t2.small
+        - Action: rds:*
+          Effect: Allow
+          Resource: "*"
+        - Action:
+          - rds:CreateDBInstance
+          - rds:ModifyDBInstance
+          - rds:StartDBInstance
+          - rds:CreateDBInstanceReadReplica
+          Effect: Deny
+          Resource: "*"
+          Condition:
+            StringNotEquals:
+              rds:DatabaseClass: db.t2.micro
+        - Action:
+          - ssm:describe*
+          - ssm:GetParameter
+          - ssm:GetParameters
+          - ssm:PutParameter
+          Effect: Allow
+          Resource: "*"
+        - Action: iam:CreateServiceLinkedRole
+          Effect: Allow
+          Resource: arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS
+          Condition:
+            StringLike:
+              iam:AWSServiceName: rds.amazonaws.com
+      ManagedPolicyName: lab_policy
+      Users:
+      - awsstudent
+  IAMUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    DependsOn: IAMUser
+    Properties:
+      Status: Active
+      UserName: awsstudent
+Outputs:
+  CliHostPublicIP:
+    Description: Public IP address of CLI Host instance
+    Value:
+      Fn::GetAtt:
+      - CliHostInstance
+      - PublicIp
+  AccessKey:
+    Value:
+      Ref: IAMUserAccessKey
+  SecretKey:
+    Value:
+      Fn::GetAtt:
+      - IAMUserAccessKey
+      - SecretAccessKey

@@ -1,0 +1,270 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Task D CloudFormation template
+
+
+Parameters:
+
+  TaskDVpcCidr:
+    Type: String
+    Default: 10.2.0.0/16
+
+  PublicSubnet1Cidr:
+    Type: String
+    Default: 10.2.0.0/24
+
+  PublicSubnet2Cidr:
+    Type: String
+    Default: 10.2.1.0/24
+  
+  PrivateSubnet1Cidr:
+    Type: String
+    Default: 10.2.2.0/24
+  
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: 10.2.3.0/24
+
+  AmazonLinuxAMIID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+Resources:
+
+##############################
+# Environment for web server #
+##############################
+  # VPC
+  TaskDVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref TaskDVpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: TaskD VPC
+
+  #Internet Gateway
+  TaskDIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: TaskD IGW
+
+  #Attach internet gateway to VPC
+  VPCtoIGWConnection:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+      - TaskDIGW
+      - TaskDVPC
+    Properties:
+      InternetGatewayId: !Ref TaskDIGW
+      VpcId: !Ref TaskDVPC
+
+  # Public Route Table
+  TaskDPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      Tags:
+        - Key: Name
+          Value: TaskD Public Route Table
+
+  #Route internet traffic to internet gateway
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - TaskDPublicRouteTable
+      - TaskDIGW
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref TaskDIGW
+      RouteTableId: !Ref TaskDPublicRouteTable
+
+  #Public subnet 1
+  TaskDPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      MapPublicIpOnLaunch: true
+      CidrBlock: !Ref PublicSubnet1Cidr
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: AWS::Region
+      Tags:
+        - Key: Name
+          Value: TaskD Public Subnet 1
+
+  #Public subnet 2
+  TaskDPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      MapPublicIpOnLaunch: true
+      CidrBlock: !Ref PublicSubnet2Cidr
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: AWS::Region
+      Tags:
+        - Key: Name
+          Value: TaskD Public Subnet 2
+
+  # Associate public subnet 1 to the Public Route Table
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - TaskDPublicRouteTable
+      - TaskDPublicSubnet1
+    Properties:
+      SubnetId: !Ref TaskDPublicSubnet1
+      RouteTableId: !Ref TaskDPublicRouteTable
+
+  # Associate public subnet 2 to the Public Route Table
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - TaskDPublicRouteTable
+      - TaskDPublicSubnet2
+    Properties:
+      SubnetId: !Ref TaskDPublicSubnet2
+      RouteTableId: !Ref TaskDPublicRouteTable      
+
+# Dynamic web server Security Group
+  TaskDWebsiteSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: TaskDVPC
+    Properties:
+      GroupName: TaskD Web SG
+      GroupDescription: Enable access to Website
+      VpcId: !Ref TaskDVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: TaskD Web SG
+
+################################
+# Environment for rds instance #
+################################
+
+#'ec2' Create security group for rds db and open port for mysql connection 3306
+  TaskDRdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: TaskDVPC
+    Properties:
+      GroupName: TaskD RDS SG
+      GroupDescription: Enable access to database for resources in TaskDWebsiteSecurityGroup
+      VpcId: !Ref TaskDVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref TaskDWebsiteSecurityGroup
+      Tags:
+        - Key: Name
+          Value: TaskD RDS SG
+
+#'ec2' Create  private subnet 1 (vpc, cidr, az)
+  #Private subnet 1
+  TaskDPrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      MapPublicIpOnLaunch: true
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: AWS::Region
+      Tags:
+        - Key: Name
+          Value: TaskD Private Subnet 1
+
+  #Private subnet 2
+  TaskDPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      MapPublicIpOnLaunch: true
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: AWS::Region
+      Tags:
+        - Key: Name
+          Value: TaskD Private Subnet 2
+
+  # Private Route Table
+  TaskDPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: TaskDVPC
+    Properties:
+      VpcId: !Ref TaskDVPC
+      Tags:
+        - Key: Name
+          Value: TaskD Private Route Table
+
+  # Associate private subnet 1 to the Private Route Table
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - TaskDPrivateRouteTable
+      - TaskDPrivateSubnet1
+    Properties:
+      SubnetId: !Ref TaskDPrivateSubnet1
+      RouteTableId: !Ref TaskDPrivateRouteTable
+
+  # Associate private subnet 2 to the Private Route Table
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - TaskDPrivateRouteTable
+      - TaskDPrivateSubnet2
+    Properties:
+      SubnetId: !Ref TaskDPrivateSubnet2
+      RouteTableId: !Ref TaskDPrivateRouteTable   
+
+#'rds' Create db subnet group (name, description, subnetId-> private subnet 1&2, tags)
+
+#'rds' Create db instance (identifier->name, engine->rds, engine-version, 
+#db-instance-class->t2.micro, allocate-storage->20, az, db-subnet-group-name, vpc-SG-id,
+#no-publicly-accessible, --master-username ->root, --master-user-password)
+
+# #EC2 instance
+#   Instance:
+#     Type: AWS::EC2::Instance
+#     Properties:
+#       InstanceType: t2.micro
+#       ImageId: !Ref AmazonLinuxAMIID
+#       SubnetId: !Ref PublicSubnet
+#       SecurityGroupIds:
+#         - !Ref AppSecurityGroup
+#       Tags:
+#         - Key: Name
+#           Value: App Server
+
+# ###########
+# # Outputs
+# ###########
+
+# Outputs:
+
+#   TaskDVPCDefaultSecurityGroup:
+#     Value: !Sub ${TaskDVPC.DefaultSecurityGroup}
+
+# #!/bin/bash
+# sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+# sudo systemctl start amazon-ssm-agent
+# sudo systemctl enable amazon-ssm-agent
