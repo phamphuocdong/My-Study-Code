@@ -236,7 +236,20 @@ Resources:
       SubnetId: !Ref TaskDPrivateSubnet2
       RouteTableId: !Ref TaskDPrivateRouteTable   
 
-#'rds' Create db subnet group (name, description, subnetId-> private subnet 1&2, tags)
+  #'rds' Create db subnet group (name, description, subnetId-> private subnet 1&2, tags)
+  TaskDRdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    DependsOn:
+      - TaskDPrivateSubnet1
+      - TaskDPrivateSubnet2
+    Properties: 
+      DBSubnetGroupDescription: TaskD Rds Subnet Group
+      SubnetIds: 
+        - TaskDPrivateSubnet1
+        - TaskDPrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: TaskD RDS Db Subnet Group
 
 #'rds' Create db instance (identifier->name, engine->rds, engine-version, 
 #db-instance-class->t2.micro, allocate-storage->20, az, db-subnet-group-name, vpc-SG-id,
