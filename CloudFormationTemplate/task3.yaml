@@ -28,6 +28,14 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
 
+  DbUsername:
+    Type: String
+    Default: dong
+
+  DbUserPassword:
+    Type: String
+    Default: rmitstudent
+
 Resources:
 
 ##############################
@@ -157,7 +165,7 @@ Resources:
 ################################
 
 #'ec2' Create security group for rds db and open port for mysql connection 3306
-  TaskDRdsSecurityGroup:
+  TaskDVPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     DependsOn: TaskDVPC
     Properties:
@@ -245,15 +253,41 @@ Resources:
     Properties: 
       DBSubnetGroupDescription: TaskD Rds Subnet Group
       SubnetIds: 
-        - TaskDPrivateSubnet1
-        - TaskDPrivateSubnet2
+        - !Ref TaskDPrivateSubnet1
+        - !Ref TaskDPrivateSubnet2
       Tags:
         - Key: Name
           Value: TaskD RDS Db Subnet Group
 
-#'rds' Create db instance (identifier->name, engine->rds, engine-version, 
-#db-instance-class->t2.micro, allocate-storage->20, az, db-subnet-group-name, vpc-SG-id,
-#no-publicly-accessible, --master-username ->root, --master-user-password)
+  #RDS instance
+  TaskDRdsInstance:
+    Type: AWS::RDS::DBInstance
+    DependsOn:
+      - TaskDRdsSubnetGroup
+      - TaskDVPCSecurityGroup
+    Properties:
+        DBInstanceIdentifier: taskd-rds-instance
+        AllocatedStorage: 20
+        DBInstanceClass: db.t2.micro
+        Engine: MySQL
+        EngineVersion: 8.0.28
+        MasterUsername: !Ref DbUsername
+        MasterUserPassword: !Ref DbUserPassword
+        BackupRetentionPeriod: 7
+        AutoMinorVersionUpgrade: true
+        PubliclyAccessible: false
+        StorageType: gp2
+        Port: 3306
+        DBSubnetGroupName: !Ref TaskDRdsSubnetGroup
+        VPCSecurityGroups: 
+          - !Ref TaskDVPCSecurityGroup
+        AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: AWS::Region
+        Tags: 
+          - Key: Name
+            Value: TaskD RDS instance
 
 # #EC2 instance
 #   Instance:
@@ -276,6 +310,15 @@ Resources:
 
 #   TaskDVPCDefaultSecurityGroup:
 #     Value: !Sub ${TaskDVPC.DefaultSecurityGroup}
+
+# Outputs:
+#    Cluster:
+#     Description: The DB Cluster Name
+#     Value: !Ref RDSDBInstance
+    
+#    SubnetGroup:
+#     Description: The db subnet group name 
+#     Value: !Ref RDSDBSubnetGroup
 
 # #!/bin/bash
 # sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
