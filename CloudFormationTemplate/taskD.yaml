@@ -36,6 +36,22 @@ Parameters:
     Type: String
     Default: rmitstudent
 
+  DbName:
+    Type: String
+    Default: student
+
+  KeyPair:
+    Type: String
+    Default: vockey
+
+  InstanceProfileName:
+    Type: String
+    Default: LabInstanceProfile
+
+  InstanceProfileArn:
+    Type: String
+    Default: arn:aws:iam::113990101808:instance-profile/LabInstanceProfile
+
 Resources:
 
 ##############################
@@ -156,15 +172,19 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: TaskD Web SG
 
-################################
-# Environment for rds instance #
-################################
+  ################################
+  # Environment for rds instance #
+  ################################
 
-#'ec2' Create security group for rds db and open port for mysql connection 3306
+  #'ec2' Create security group for rds db and open port for mysql connection 3306
   TaskDVPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     DependsOn: TaskDVPC
@@ -181,7 +201,6 @@ Resources:
         - Key: Name
           Value: TaskD RDS SG
 
-#'ec2' Create  private subnet 1 (vpc, cidr, az)
   #Private subnet 1
   TaskDPrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -244,7 +263,7 @@ Resources:
       SubnetId: !Ref TaskDPrivateSubnet2
       RouteTableId: !Ref TaskDPrivateRouteTable   
 
-  #'rds' Create db subnet group (name, description, subnetId-> private subnet 1&2, tags)
+  # Db subnet group
   TaskDRdsSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     DependsOn:
@@ -269,7 +288,7 @@ Resources:
         DBInstanceIdentifier: taskd-rds-instance
         AllocatedStorage: 20
         DBInstanceClass: db.t2.micro
-        Engine: MySQL
+        Engine: mysql
         EngineVersion: 8.0.28
         MasterUsername: !Ref DbUsername
         MasterUserPassword: !Ref DbUserPassword
@@ -285,40 +304,165 @@ Resources:
         - 0
         - !GetAZs 
           Ref: AWS::Region
+        DBName: !Ref DbName
         Tags: 
           - Key: Name
             Value: TaskD RDS instance
 
-# #EC2 instance
-#   Instance:
-#     Type: AWS::EC2::Instance
-#     Properties:
-#       InstanceType: t2.micro
-#       ImageId: !Ref AmazonLinuxAMIID
-#       SubnetId: !Ref PublicSubnet
-#       SecurityGroupIds:
-#         - !Ref AppSecurityGroup
-#       Tags:
-#         - Key: Name
-#           Value: App Server
+  #Launch template
+  TaskDLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: TaskDLaunchTemplate
+      LaunchTemplateData:
+        IamInstanceProfile:
+          Arn: !Ref InstanceProfileArn
+        DisableApiTermination: true
+        ImageId: !Ref AmazonLinuxAMIID
+        InstanceType: t2.micro
+        KeyName: !Ref KeyPair
+        SecurityGroupIds:
+          - !Ref TaskDWebsiteSecurityGroup
+        UserData:
+          Fn::Base64:
+            Fn::Join:
+            - ''
+            - - "#!/bin/bash -ex \n"
+              #Update software software and install Apache web server
+              - "sudo yum update -y \n" #Update software on the instance
+              - "sudo yum install -y wget \n" #Install wget
+              - "sudo yum install -y httpd \n" #Install Apache web server
+              - "sudo systemctl start httpd \n" #Start the web server
+              - "sudo systemctl enable httpd \n" #Enable the web server to start when ever system boost
 
-# ###########
-# # Outputs
-# ###########
+              #Install and enable ssm agent
+              - "sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm \n"
+              - "sudo systemctl start amazon-ssm-agent \n"
+              - "sudo systemctl enable amazon-ssm-agent \n"
 
-# Outputs:
+              #Install DynamicWeb source code and unzip it
+              - "cd /var/www/html \n"
+              - "touch imhere.txt \n"
+              - "sudo wget https://publicsourcecodefordownloading.s3.amazonaws.com/DynamicWeb.zip \n"
+              - "sudo unzip DynamicWeb.zip \n"
+  
+  #Set up parameter store
+  DatabaseUsername:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /student/username
+      Type: String
+      Value: !Ref DbUsername
+      Description: Database user name
 
-#   TaskDVPCDefaultSecurityGroup:
-#     Value: !Sub ${TaskDVPC.DefaultSecurityGroup}
+  DatabasePassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /student/password
+      Type: String
+      Value: !Ref DbUserPassword
+      Description: Database user password
 
-# Outputs:
-#    Cluster:
-#     Description: The DB Cluster Name
-#     Value: !Ref RDSDBInstance
-    
-#    SubnetGroup:
-#     Description: The db subnet group name 
-#     Value: !Ref RDSDBSubnetGroup
+  DatabaseName:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /student/database
+      Type: String
+      Value: !Ref DbName
+      Description: Database name
+
+  DatabaseEndpoint:
+    Type: AWS::SSM::Parameter
+    DependsOn:
+      - TaskDRdsInstance
+    Properties:
+      Name: /student/endpoint
+      Type: String
+      Value: !GetAtt TaskDRdsInstance.Endpoint.Address
+      Description: RDS Database endpoint
+
+  # Target group
+  TaskDTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn:
+      - TaskDRdsInstance
+      - TaskDVPC
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref TaskDVPC
+      TargetType: instance
+
+  # Load balancer security group
+  TaskDElbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: TaskDVPC
+    Properties:
+      GroupName: TaskD ELB SG
+      GroupDescription: Enable access to Load Balancer
+      VpcId: !Ref TaskDVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: TaskD ELB SG
+
+  # Load balancer
+  TaskDLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn:
+      - TaskDPublicSubnet1
+      - TaskDPublicSubnet2
+      - TaskDElbSecurityGroup
+    Properties:
+      Subnets: 
+        - !Ref TaskDPublicSubnet1
+        - !Ref TaskDPublicSubnet2
+      SecurityGroups: 
+        - !Ref TaskDElbSecurityGroup
+
+  # Load balancer listener
+  TaskDElbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - TaskDTargetGroup
+      - TaskDLoadBalancer
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TaskDTargetGroup
+      LoadBalancerArn: !Ref TaskDLoadBalancer
+      Port: '80'
+      Protocol: HTTP
+
+  # Auto scaling group
+  TaskDAutoscalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - TaskDPublicSubnet1
+      - TaskDPublicSubnet2
+      - TaskDLaunchTemplate
+      - TaskDTargetGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref TaskDPublicSubnet1
+        - !Ref TaskDPublicSubnet2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref TaskDLaunchTemplate
+        Version: !GetAtt TaskDLaunchTemplate.LatestVersionNumber
+      MaxSize: '4'
+      MinSize: '2'
+      TargetGroupARNs:
+        - !Ref TaskDTargetGroup
+      
+      Tags:
+        - Key: Name
+          Value: Dynamic Web Server
+          PropagateAtLaunch: true
+
 
 # #!/bin/bash
 # sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
