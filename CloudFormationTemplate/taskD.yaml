@@ -327,13 +327,14 @@ Resources:
           Fn::Base64:
             Fn::Join:
             - ''
-            - - "#!/bin/bash -ex \n"
+            - - "#!/bin/bash \n"
               #Update software software and install Apache web server
               - "sudo yum update -y \n" #Update software on the instance
               - "sudo yum install -y wget \n" #Install wget
               - "sudo yum install -y httpd \n" #Install Apache web server
               - "sudo systemctl start httpd \n" #Start the web server
               - "sudo systemctl enable httpd \n" #Enable the web server to start when ever system boost
+              - "sudo amazon-linux-extras install php8.0 mariadb10.5 \n" #Install wget
 
               #Install and enable ssm agent
               - "sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm \n"
@@ -342,7 +343,6 @@ Resources:
 
               #Install DynamicWeb source code and unzip it
               - "cd /var/www/html \n"
-              - "touch imhere.txt \n"
               - "sudo wget https://publicsourcecodefordownloading.s3.amazonaws.com/DynamicWeb.zip \n"
               - "sudo unzip DynamicWeb.zip \n"
   
@@ -457,7 +457,6 @@ Resources:
       MinSize: '2'
       TargetGroupARNs:
         - !Ref TaskDTargetGroup
-      
       Tags:
         - Key: Name
           Value: Dynamic Web Server

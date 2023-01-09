@@ -1,0 +1,16 @@
+#!/bin/bash -ex
+#Update software software and install Apache web server
+sudo yum update -y #Update software on the instance
+sudo yum install -y wget #Install wget
+sudo yum install -y httpd #Install Apache web server
+sudo systemctl start httpd #Start the web server
+sudo systemctl enable httpd #Enable the web server to start when ever system boost
+
+#Install and enable ssm agent
+sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+sudo systemctl start amazon-ssm-agent
+sudo systemctl enable amazon-ssm-agent
+
+#Install DynamicWeb source code and unzip it
+wget https://publicsourcecodefordownloading.s3.amazonaws.com/DynamicWeb.zip
+sudo unzip DynamicWeb.zip -d /var/www/html/
