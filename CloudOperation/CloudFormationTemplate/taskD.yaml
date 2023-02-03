@@ -1,9 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Task D CloudFormation template
 
-
 Parameters:
-
   TaskDVpcCidr:
     Type: String
     Default: 10.2.0.0/16
@@ -184,7 +182,7 @@ Resources:
   # Environment for rds instance #
   ################################
 
-  #'ec2' Create security group for rds db and open port for mysql connection 3306
+  #Create security group for rds db and open port for mysql connection 3306
   TaskDVPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     DependsOn: TaskDVPC
@@ -461,9 +459,3 @@ Resources:
         - Key: Name
           Value: Dynamic Web Server
           PropagateAtLaunch: true
-
-
-# #!/bin/bash
-# sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-# sudo systemctl start amazon-ssm-agent
-# sudo systemctl enable amazon-ssm-agent
