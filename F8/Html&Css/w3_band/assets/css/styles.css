@@ -15,17 +15,42 @@ html {
 }
 
 #header {
+  position: fixed;
   height: 46px;
   background-color: #000;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+#header .header-search {
+  float: right;
+}
+
+#header .header-search:hover {
+  background-color: #f44336;
+  cursor: pointer;
+}
+
+#header .header-search-icon {
+  font-size: 20px;
+  color: #fff;
+  line-height: 46px;
+  padding: 0 24px;
 }
 
 #nav {
-
+  display: inline-block;
 }
 
 #nav > li {
   display: inline-block;
   position: relative;
+}
+
+#nav li .angle-down-icon {
+  font-size: 12px;
 }
 
 #nav > li > a {
@@ -70,12 +95,33 @@ html {
 }
 
 #slider {
-  min-height: 500px;
-  background-color: #333;
+  position: relative;
+  margin-top: 46px;
+  padding-top: 50%;
+  background: url('../img/slider1.jpg') top center / cover no-repeat;
+}
+
+#slider .content {
+  position: absolute;
+  bottom: 0;
+  color: #fff;
+  padding: 47px;
+  width: 100%;
+  text-align: center;
+}
+
+#slider .content .header {
+  font-weight: 100;
+  font-size: 24px;
+  margin-bottom: 25px;
+}
+
+#slider .content .body {
+  font-size: 15px;
 }
 
 #content {
-
+  height: 1000px;
 }
 
 #footer {
