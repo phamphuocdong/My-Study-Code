@@ -8,6 +8,7 @@
 
 html {
   font-family: Arial, Helvetica, sans-serif;
+  scroll-behavior: smooth;
 }
 
 /* Common */
@@ -23,12 +24,37 @@ html {
   text-align: center !important;
 }
 
-.row {
+.text-uppercase {
+  text-transform: uppercase !important;
+}
 
+.mt-8 {
+  margin-top: 8px !important;
+}
+
+.mt-16 {
+  margin-top: 16px !important;
+}
+
+.pull-right {
+  float: right !important;
+}
+
+.row {
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.row::after {
+  content: "";
+  clear: both;
+  display: block;
 }
 
 .col {
-
+  float: left;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .col-half {
@@ -37,6 +63,10 @@ html {
 
 .col-third {
   width: 33.33333%;
+}
+
+.col-ful {
+  width: 100%;
 }
 
 /* Main content */
@@ -151,19 +181,16 @@ html {
 }
 
 #content {
-  height: 1000px;
 }
 
 #content .content-section {
   width: 800px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding: 64px 0;;
-}
-
-#content .heading,
-#content .sub-heading {
-  text-align: center;
+  padding: 64px 0 112px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 #content .content-heading {
@@ -187,12 +214,6 @@ html {
 
 #content .member-list {
   margin-top: 48px;
-  text-align: center;
-}
-
-#content .member-item {
-  float: left;
-  width: 33.33333%;
 }
 
 #content .member-name {
@@ -206,6 +227,7 @@ html {
 
 #content .tour-section {
   background-color: #000;
+
 }
 
 #content .ticket-list {
@@ -242,15 +264,7 @@ html {
 }
 
 #content .place-list {
-  padding: 32px 0;
-  margin: 0 -8px;
-}
-
-#content .place-item {
-  float: left;
-  width: 33.33333%;
-  padding: 0 8px;
-  font-size: 15px;
+  padding-top: 32px;
 }
 
 #content .place-img {
@@ -266,6 +280,7 @@ html {
   background-color: #fff;
   color: #000;
   padding: 16px;
+  font-size: 15px;
 }
 
 #content .place-heading {
@@ -282,7 +297,7 @@ html {
   line-height: 1.4;
 }
 
-#content .place-buy-btn {
+#content .btn {
   display: inline-block;
   margin-top: 15px;
   text-decoration: none;
@@ -292,16 +307,13 @@ html {
   border: none;
 }
 
-#content .place-buy-btn:hover {
+#content .btn:hover {
   color: #000;
   background-color: #ccc;
   border: none;
+  cursor: pointer;
 }
 
-
-#footer {
-
-}
 
 /* Modal */
 .modal {
@@ -409,4 +421,71 @@ html {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* Contact content */
+.contact-body {
+  margin-top: 48px;
+}
+
+.contact-body .contact-info {
+  font-size: 18px;
+}
+
+.contact-info i[class*="ti-"] {
+  width: 30px;
+  display: inline-block;
+  line-height: 1.5;
+}
+
+.contact-form {
+  font-size: 15px;
+}
+
+.contact-form .form-control {
+  padding: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+/* Map image */
+.map img {
+  width: 100%;
+  display: block;
+}
+
+#footer {
+  padding: 64px 16px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+#footer .social-list a {
+  text-decoration: none;
+  color: #000;
+  font-size: 24px;
+}
+
+#footer .w3-link:hover,
+#footer .social-list a:hover {
+  opacity: 0.4;
+}
+
+#footer .copy-right {
+  margin-top: 15px;
+  font-size: 15px;
+}
+
+#footer .w3-link {
+  color: #000;
+}
+
+/* Tablet */
+@media (min-width: 740px) and (max-width: 1023px) {
+
+}
+
+/* Mobile */
+@media (max-width: 739px) {
+
 }
