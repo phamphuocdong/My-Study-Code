@@ -84,7 +84,9 @@ html {
   z-index: 1;
 }
 
-#header .header-search {
+/* Mobile here */
+#header .header-search,
+#header .mobile-menu-btn {
   float: right;
 }
 
@@ -93,7 +95,25 @@ html {
   cursor: pointer;
 }
 
-#header .header-search-icon {
+#header .mobile-menu-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: none;
+}
+
+#header .mobile-menu-btn:hover {
+  background-color: #ccc;
+  cursor: pointer;
+}
+
+#header .mobile-menu-btn:hover i {
+  color: #000;
+}
+
+/* Mobile here */
+#header .header-search-icon,
+#header .mobile-menu-icon {
   font-size: 20px;
   color: #fff;
   line-height: 46px;
@@ -122,7 +142,7 @@ html {
 #nav li a{
   text-decoration: none;
   padding: 0 24px;
-  display: inline-block;
+  display: block;
 }
 
 #nav li:hover .subnav {
@@ -139,7 +159,6 @@ html {
   display: none;
   position: absolute;
   background-color: #fff;
-  color: #000;
   list-style-type: none;
   box-shadow: 0 0 10px;
   left: 0;

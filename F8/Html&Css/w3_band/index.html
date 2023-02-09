@@ -7,6 +7,7 @@
   <title>The band</title>
   <link rel="icon" type="image/png" href="./assets/img/favicon.png"/>
   <link rel="stylesheet" href="./assets/css/styles.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
   <link rel="stylesheet" href="./assets/fonts/themify-icons-master/css/themify-icons.css">
 </head>
 <body>
@@ -32,6 +33,10 @@
       <!-- Begin Search -->
       <div class="header-search">
         <i class="header-search-icon ti-search"></i>
+      </div>
+
+      <div id="mobile-menu" class="mobile-menu-btn">
+        <i class="mobile-menu-icon ti-menu"></i>
       </div>
       <!-- End Search -->
     </div>
@@ -59,15 +64,15 @@
         </p>
 
         <div class="row member-list text-center">
-          <div class="col col-third">
+          <div class="col col-third mobile-member">
             <p class="member-name">Name</p>
             <img src="./assets/img/member/memberImage.jpg" alt="" class="member-img">
           </div>
-          <div class="col col-third">
+          <div class="col col-third mobile-member">
             <p class="member-name">Name</p>
             <img src="./assets/img/member/memberImage.jpg" alt="" class="member-img">
           </div>
-          <div class="col col-third">
+          <div class="col col-third mobile-member">
             <p class="member-name">Name</p>
             <img src="./assets/img/member/memberImage.jpg" alt="" class="member-img">
           </div>
@@ -234,6 +239,7 @@
   </div>
 
   <script>
+    // Start Open/close buy ticket modal
     const buyBtns = document.querySelectorAll('.js-buy-ticket')
     const modal = document.querySelector('.modal')
     const modalContainer = document.querySelector('.js-modal-container')
@@ -259,6 +265,37 @@
     modalContainer.addEventListener('click', function(event) {
       event.stopPropagation();
     })
+    // End Open/close buy ticket modal
+
+    // Open/Close  header menu for Mobile
+    var header = document.getElementById('header');
+    var mobileMenuBtn = document.getElementById('mobile-menu');
+    var headerHeight = header.clientHeight;
+
+    // Open/close menu
+    mobileMenuBtn.onclick = function() {
+      var isClosed = header.clientHeight === headerHeight;
+      if(isClosed) {
+        header.style.height = 'auto';
+      } else {
+        header.style.height = null;
+      }
+    }
+
+    // Close menu when choose an menu item
+    var menuItems = document.querySelectorAll('#nav li a[href*="#"]');
+    for ( var i = 0; i < menuItems.length; i++) {
+      var menuItem = menuItems[i];
+
+      menuItem.onclick = function(event) {
+        var isParentMenu = this.nextElementSibling && this.nextElementSibling.classList.contains('subnav');
+        if (isParentMenu) {
+          event.preventDefault();
+        } else {
+          header.style.height = null;
+        }
+      }
+    }
   </script>
 </body>
 </html>
