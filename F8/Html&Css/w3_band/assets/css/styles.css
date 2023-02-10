@@ -36,6 +36,10 @@ html {
   margin-top: 16px !important;
 }
 
+.mt-32 {
+  margin-top: 32px !important;
+}
+
 .pull-right {
   float: right !important;
 }
@@ -197,6 +201,7 @@ html {
 
 #slider .content .body {
   font-size: 15px;
+  text-shadow: 0 0 1px #000;
 }
 
 #content {
@@ -232,7 +237,7 @@ html {
 }
 
 #content .member-list {
-  margin-top: 48px;
+  margin-top: 32px;
 }
 
 #content .member-name {
@@ -324,6 +329,8 @@ html {
   color: #fff;
   background-color: #000;
   border: none;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 #content .btn:hover {
@@ -449,6 +456,15 @@ html {
 
 .contact-body .contact-info {
   font-size: 18px;
+}
+
+.contact-info a {
+  color: #00e;
+  opacity: 0.8;
+}
+
+.contact-info a:hover {
+  opacity: 1;
 }
 
 .contact-info i[class*="ti-"] {
