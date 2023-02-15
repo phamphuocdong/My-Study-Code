@@ -68,6 +68,7 @@ body > div {
   position: fixed;
   top: 32px;
   right: 32px;
+  z-index: 99999;
 }
 
 .toast {
@@ -80,7 +81,7 @@ body > div {
   max-width: 450px;
   border-left: 4px solid;
   box-shadow: 0 5px 8px rgba(0, 0, 0, 0.08);
-  animation: slideInLeft ease 0.3s, fadeOut linear 1s 3s forwards;
+  transition: all linear 0.5s;
 }
 
 @keyframes slideInLeft {

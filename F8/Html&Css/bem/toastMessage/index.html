@@ -27,8 +27,8 @@
   <div id="toast"></div>
 
   <div>
-    <div class="btn btn--success">Show success toast</div>
-    <div class="btn btn--danger">Show error toast</div>
+    <div onclick="showSuccessToast();" class="btn btn--success">Show success toast</div>
+    <div onclick="showErrorToast();" class="btn btn--danger">Show error toast</div>
   </div>
 
   <script>
@@ -37,17 +37,39 @@
       title = '',
       message = '',
       type = 'info',
-      duration = 3000
+      duration = 1000
     }) {
       const main = document.getElementById('toast');
 
       if (main) {
         const toast = document.createElement('div');
 
+        // Auto remove toast
+        const autoRemoveId = setTimeout(function() {
+          main.removeChild(toast);
+        }, duration + 1000);
+
+        // Remove toast onclick
+        toast.onclick = function(e) {
+          if (e.target.closest('.toast__close')) {
+            main.removeChild(toast);
+            clearTimeout(autoRemoveId);
+          }
+        }
+        const icons = {
+          success: 'fa-regular fa-circle-check',
+          info: 'fa-solid fa-circle-info',
+          warning: 'fa-solid fa-circle-exclamation',
+          error: 'fa-solid fa-circle-exclamation',
+        };
+        const icon = icons[type];
+        const delay = (duration / 1000).toFixed(2);
+
         toast.classList.add('toast', `toast--${type}`);
+        toast.style.animation =`slideInLeft ease 0.3s, fadeOut linear 1s ${delay}s forwards`;
         toast.innerHTML = `
         <div class="toast__icon">
-          <i class="fa-regular fa-circle-check"></i>
+          <i class="${icon}"></i>
         </div>
         <div class="toast__body">
           <h3 class="toast__title">${title}</h3>
@@ -61,12 +83,24 @@
       }
     }
     
-    toast({
+    
+    function showSuccessToast() {
+      toast({
       title: 'Success',
       message: 'Warframe has been updated',
       type: 'success',
-      duration: 3000
+      duration: 2000
+      });
+    };
+
+    function showErrorToast() {
+      toast({
+      title: 'Error',
+      message: 'Warframe failed to update',
+      type: 'error',
+      duration: 2000
     });
+    };
   </script>
 </body>
 </html>
