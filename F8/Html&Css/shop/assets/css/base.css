@@ -12,7 +12,10 @@
 
 * {
   /* Để tất cả các thẻ sẽ kế thừa lại thuộc tính box-sizing từ thẻ cha */
-  box-sizing: inherit;
+  /* box-sizing: inherit; */
+  
+  /* mycode */
+  box-sizing: border-box; 
 }
 
 html {
@@ -22,6 +25,7 @@ html {
   font-family: 'Roboto', sans-serif;
 }
 
+/* Responsive */
 .grid {
   width: 1200px;
   max-width: 100%;
@@ -35,6 +39,21 @@ html {
 .grid__row {
   display: flex;
   flex-wrap: wrap;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+/* Test */
+.grid__column-2 {
+  padding-left: 12px;
+  padding-right: 12px;
+  width: 16.6667%;
+}
+
+.grid__column-10 {
+  padding-left: 12px;
+  padding-right: 12px;
+  width: 83.3334%;
 }
 
 /* Animation */
@@ -95,7 +114,7 @@ html {
   outline: none;
   cursor: pointer;
   color: var(--text-color);
-  display: flex;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
   line-height: 1.6rem;
