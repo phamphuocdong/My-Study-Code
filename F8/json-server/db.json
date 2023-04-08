@@ -1,24 +1,19 @@
 {
   "courses": [
     {
-      "id": 1,
-      "name": "Kiến thức cơ bản",
-      "description": "Kiến thức cơ bản cho người mới"
+      "name": "Course name 1: Course name 1: Kiến thức cơ bản",
+      "description": "Course description: Course description: Kiến thức cơ bản cho người mới",
+      "id": 1
     },
     {
-      "name": "1 Xây dựng web với NodeJS & ExpressJS",
+      "name": "1 Xây dựng web với NodeJS & ExpressJS 2",
       "description": "2 Xây dựng web trong thực tế với NodeJS & ExpressJS",
       "id": 2
     },
     {
-      "name": "Thiết kế web reponsive",
+      "name": "Thiết kế web reponsive for new bie 4",
       "description": "Khóa học về responsive cho website",
       "id": 3
-    },
-    {
-      "name": "HTML, CSS tips",
-      "description": "Tutorials về HTML, CSS, UI, UX",
-      "id": 6
     }
   ]
 }

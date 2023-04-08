@@ -61,16 +61,47 @@ function handleUpdateCourse(id) {
     var courseToUpdate = document.querySelector('.course-item-' + id);
     if (courseToUpdate) {
         // In data vào input field
-        oldCourseName = courseToUpdate.querySelector('h4').textContent;
-        oldCourseDescription = courseToUpdate.querySelector('p').textContent;
+        nameToUpdate = courseToUpdate.querySelector('h4').textContent;
+        descToUpdate = courseToUpdate.querySelector('p').textContent;
 
         //Dán old data vào input
-        var name = document.querySelector('input[name="name"]');
-        var description = document.querySelector('input[name="description"]');
-        name.value = oldCourseName;
-        description.value = oldCourseDescription;
-        console.log(name + " " + description);
+        var inputName = document.querySelector('input[name="name"]');
+        var inputDescription = document.querySelector('input[name="description"]');
+        inputName.value = nameToUpdate;
+        inputDescription.value = descToUpdate;
         getCourses(renderCourses);
+
+        //Show update button
+        displayEditBtn(true);
+
+        var confirmUpdateBtn = document.querySelector('#confirm-update');
+
+        confirmUpdateBtn.onclick = function() {
+            var newName = document.querySelector('input[name="name"]').value;
+            var newDescription = document.querySelector('input[name="description"]').value;
+            let data = {
+                name: newName,
+                description: newDescription
+            }
+
+            var options = { //Search for using fetch
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            };
+            fetch(courseAPI + '/' + id, options)
+                .then(function(response) {
+                    response.json();
+                })
+                .then(function() {
+                    getCourses(renderCourses);
+                    displayEditBtn(false);
+                    inputName.value = "";
+                    inputDescription.value = "";
+                });
+        }
     }
 
     
@@ -80,7 +111,7 @@ function handleUpdateCourse(id) {
     //Khi nhấn vào nút lưu sẽ thực hiện lưu data
 }
 
-// function editCourse() {
+// function editCourse({id, ...data}) {
 //     var options = { //Search for using fetch
 //         method: 'PUT',
 //         headers: {
@@ -92,22 +123,23 @@ function handleUpdateCourse(id) {
 //         .then(function(response) {
 //             response.json();
 //         })
-//         .then(function() {
-//             var updateBtn = document.querySelector(".update");
+//         .then(function(course) {
 
-//             updateBtn.onlick = function() {
-//                 //
-
-//             }
+//             console.log("Course to update: " + course);
+//             displayEditBtn(false);
 //         });
 // }
 
 function displayEditBtn(isDisplayed) {
     var confirmUpdateBtn = document.querySelector("#confirm-update");
+    var createBtn = document.querySelector("#create");
+
     if (isDisplayed) {
         confirmUpdateBtn.style.display = "block";
+        createBtn.style.display = "none";
     } else {
         confirmUpdateBtn.style.display = "none";
+        createBtn.style.display = "block";
     }
 }
 
