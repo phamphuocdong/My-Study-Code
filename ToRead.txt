@@ -1,0 +1,6 @@
+1. Introduction to events JS: 
+https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events
+
+2. Web Animation Api: 
+https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API
+

@@ -19,11 +19,15 @@ const cdThumb = $('.cd-thumb');
 const audio = $('#audio');
 const cd = $('.cd');
 const playBtn = $('.btn-toggle-play');
+const prevBtn = $('.btn-prev');
+const nextBtn = $('.btn-next');
+const randomBtn = $('.btn-random');
 const progress = $('#progress');
 
 const app = {
   currentIndex: 0,
   isPlaying: false,
+  isRandom: false,
   songs: [
     {
       name: "Click Pow Get Down",
@@ -98,6 +102,15 @@ const app = {
   handleEvents: function() {
     const _this = this;
     const cdWidth = cd.offsetWidth;
+
+    // Xử lý CD quay / dừng
+    const cdThumbAnimate = cdThumb.animate([
+      { transform: 'rotate(360deg)'}
+    ], {
+      duration: 10000, // 10sec
+      iterations: Infinity // Loop bao nhiêu lần
+    })
+    cdThumbAnimate.pause();
     
     // Modify CD size
     document.onscroll = function() {
@@ -115,25 +128,52 @@ const app = {
       } else {
         audio.play();
       }
-      
     }
 
     // When song is played
     audio.onplay = function() {
       _this.isPlaying = true;
       player.classList.add('playing')
+      cdThumbAnimate.play();
     }
 
     // When song is paused
     audio.onpause = function() {
       _this.isPlaying = false;
       player.classList.remove('playing')
+      cdThumbAnimate.pause();
     }
 
     // When song progress changed
     audio.ontimeupdate = function() {
-      //todo(video: 38:41): if(audio)
-      console.log(audio.currentTime / audio.duration * 100);
+      if(audio.duration) {
+        const progressPercent = Math.floor(audio.currentTime / audio.duration * 100);
+        progress.value = progressPercent;
+      }
+    }
+
+    // Xử lý khi tua bài hát
+    progress.onchange = function(e) { // :onchange: HTML events
+      const seekTime = audio.duration * e.target.value / 100;
+      audio.currentTime = seekTime;
+    }
+
+    // Khi chọn next song
+    nextBtn.onclick = function() {
+      _this.nextSong();
+      audio.play();
+    }
+
+    // Khi chọn previous song
+    prevBtn.onclick = function() {
+      _this.prevSong();
+      audio.play();
+    }
+
+    // Khi chọn random song
+    randomBtn.onclick = function(e) {
+      _this.isRandom = !_this.isRandom;
+      randomBtn.classList.toggle('active', _this.isRandom)
     }
   },
 
@@ -141,6 +181,30 @@ const app = {
     heading.textContent = this.currentSong.name;
     cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
     audio.src = this.currentSong.path;
+  },
+
+  nextSong: function() {
+    this.currentIndex++;
+    if (this.currentIndex >= this.songs.length) {
+      this.currentIndex = 0;
+    }
+    this.loadCurrentSong();
+  },
+  
+  prevSong: function() {
+    this.currentIndex--;
+    if (this.currentIndex < 0) {
+      this.currentIndex = this.songs.length - 1;
+    }
+    this.loadCurrentSong();
+  },
+
+  playRandomSong: function() {
+    let newIndex
+    do {
+      newIndex = Math.floor(Math.random() * this.songs.length);
+    } while (newIndex === this.currentIndex);
+    //todo 1:05:38
   },
 
   start: function() {
