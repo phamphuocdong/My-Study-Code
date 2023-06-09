@@ -1,17 +1,26 @@
+courses = [
+    {
+        name: 'Js',
+        price: 100
+    },
+    {
+        name: 'Java',
+        price: 250
+    }
+]
 
 
-// Expected results
+var i = 0;
+function coinHandler(acc, cur, curIndex, ogArr) {
+    i++;
+    var total = acc + cur.price;
+    console.table({
+        'index: ': i,
+        'accumulator: ': acc,
+        'course price: ': cur.price,
+        'obtained coin: ': total
+    });
+    return total;
+}
 
-const numbers = [];
-
-console.log(numbers.every(function (number) {
-    return number % 2 !== 0;
-})); // Output: true
-
-console.log(numbers.every(function (number, index) {
-    return index % 2 === 0;
-})); // Output: false
-
-console.log(numbers.every(function (number, index, array) {
-    return array.length % 2 === 0;
-})); // Output: true
+var totalCoin = courses.reduce(coinHandler, 0);

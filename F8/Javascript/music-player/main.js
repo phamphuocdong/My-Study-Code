@@ -160,20 +160,34 @@ const app = {
 
     // Khi chọn next song
     nextBtn.onclick = function() {
-      _this.nextSong();
+      if (_this.isRandom) {
+        _this.playRandomSong()
+      } else {
+        _this.nextSong();
+      }
       audio.play();
     }
 
     // Khi chọn previous song
     prevBtn.onclick = function() {
-      _this.prevSong();
+      if (_this.isRandom) {
+        _this.playRandomSong()
+      } else {
+        _this.prevSong();
+      }
       audio.play();
     }
 
-    // Khi chọn random song
+    // Handle khi bật/tắt random song
     randomBtn.onclick = function(e) {
       _this.isRandom = !_this.isRandom;
       randomBtn.classList.toggle('active', _this.isRandom)
+    }
+
+    // Handle next song khi current song end
+    audio.onended = function() {
+      console.log("1 2 3");
+      //todo 1:10:18
     }
   },
 
@@ -204,7 +218,9 @@ const app = {
     do {
       newIndex = Math.floor(Math.random() * this.songs.length);
     } while (newIndex === this.currentIndex);
-    //todo 1:05:38
+
+    this.currentIndex = newIndex;
+    this.loadCurrentSong();
   },
 
   start: function() {
