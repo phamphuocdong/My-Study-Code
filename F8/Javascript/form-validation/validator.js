@@ -25,13 +25,48 @@ function Validator(options) {
             errorElement.innerText = '';
             inputElement.parentElement.classList.remove('invalid');
         }
+        return !errorMessage;
+        //? ! convert value to boolean type and reverse value of it
     }
 
-    //* progress: 19.34
     // Get element of form that need validate
     var formElement = document.querySelector(options.form);
 
     if (formElement) {
+        formElement.onsubmit = function (e) {
+            e.preventDefault();
+
+            var isFormValid = true;
+
+            // Lặp qua từng rule và validate
+            options.rules.forEach(function (rule) {
+                var inputElement = formElement.querySelector(rule.selector);
+                var isValid = validate(inputElement, rule);
+                if (!isValid) {
+                    isFormValid = false;
+                }
+            });
+            
+
+            if (isFormValid) {
+                // Trường hợp handle submit bằng Js
+                if (typeof options.onSubmit === 'function') {
+                    
+                    var enableInputs = formElement.querySelectorAll('[name]:not([disabled])'); //? Select tất cả những field có attribute là name và k có attribute là disable
+                    //? log(enableInputs) sẽ nhận dc 1 NodeList, nên ta cần chuyển nó thành array trước khi dùng reduce()
+
+                    var formValues = Array.from(enableInputs).reduce(function(values, input) {
+                        return (values[input.name] = input.value) && values;
+                    }, {});
+
+                    options.onSubmit(formValues);
+                } else { // Trường hợp submit với hành vi mặc định của html
+                    formElement.submit();
+                }
+            } 
+        }
+
+        // Lặp qua mỗi rule và xử lý (lắng nghe sự kiện: blur, input, ...)
         options.rules.forEach(function (rule) {
 
             //Save rules for each input
