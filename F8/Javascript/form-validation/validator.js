@@ -1,11 +1,21 @@
+//todo làm 1 cái form template hoàn chỉnh với tất cả cái input type
+
 // Constructor function
 function Validator(options) {
+    function getParent(element, selector) {
+        while(element.parentElement) {
+            if (element.parentElement.matches(selector)) {
+                return element.parentElement;
+            }
+            element = element.parentElement;
+        }
+    }
 
     var selectorRules = {};
 
     // Perform data validation
     function validate(inputElement, rule) {
-        var errorElement = inputElement.parentElement.querySelector(options.errorSelector);
+        var errorElement = getParent(inputElement, options.formGroupSelector).querySelector(options.errorSelector);
         var errorMessage;
 
         // Lấy ra các rules của selector
@@ -13,17 +23,26 @@ function Validator(options) {
 
         //Lặp qua từng rule & kiểm tra
         for (var i = 0; i < rules.length; i++) {
-            errorMessage = rules[i](inputElement.value); // === rule.test(inputElement.value)
+            switch (inputElement.type) {
+                case 'checkbox':
+                case 'radio':
+                    errorMessage = rules[i](
+                        document.querySelector(rule.selector + ':checked')
+                    );
+                    break;
+                default:
+                    errorMessage = rules[i](inputElement.value); // === rule.test(inputElement.value)
+            }
             // Nếu có lỗi thì dừng việc kiếm tra
             if (errorMessage) break; 
         }
 
         if (errorMessage) {
             errorElement.innerText = errorMessage;
-            inputElement.parentElement.classList.add('invalid');
+            getParent(inputElement, options.formGroupSelector).classList.add('invalid');
         } else {
             errorElement.innerText = '';
-            inputElement.parentElement.classList.remove('invalid');
+            getParent(inputElement, options.formGroupSelector).classList.remove('invalid');
         }
         return !errorMessage;
         //? ! convert value to boolean type and reverse value of it
@@ -41,6 +60,7 @@ function Validator(options) {
             // Lặp qua từng rule và validate
             options.rules.forEach(function (rule) {
                 var inputElement = formElement.querySelector(rule.selector);
+                
                 var isValid = validate(inputElement, rule);
                 if (!isValid) {
                     isFormValid = false;
@@ -56,7 +76,28 @@ function Validator(options) {
                     //? log(enableInputs) sẽ nhận dc 1 NodeList, nên ta cần chuyển nó thành array trước khi dùng reduce()
 
                     var formValues = Array.from(enableInputs).reduce(function(values, input) {
-                        return (values[input.name] = input.value) && values;
+                        switch(input.type) {
+                            case 'radio':
+                                values[input.name] = formElement.querySelector('input[name="' + input.name + '"]:checked').value;
+                                break;
+                            case 'checkbox':
+                                if(!input.matches(':checked')) {
+                                    values[input.name] = '';
+                                    return values
+                                };
+
+                                if (!Array.isArray(values[input.name])) {
+                                    values[input.name] = [];
+                                } 
+                                values[input.name].push(input.value)
+                                break;
+                            case 'file':
+                                values[input.name] = input.files;
+                                break;
+                            default:
+                                values[input.name] = input.value;
+                        }
+                        return  values;
                     }, {});
 
                     options.onSubmit(formValues);
@@ -76,9 +117,9 @@ function Validator(options) {
                 selectorRules[rule.selector] = [rule.test];
             }
 
-            var inputElement = formElement.querySelector(rule.selector);
+            var inputElements = formElement.querySelectorAll(rule.selector);
 
-            if (inputElement) {
+            Array.from(inputElements).forEach(function(inputElement) {
                 // Handle case user blur out of input
                 inputElement.onblur = function () {
                     validate(inputElement, rule);
@@ -86,11 +127,13 @@ function Validator(options) {
 
                 // Handle case user enter input
                 inputElement.oninput = function() {
-                    var errorElement = inputElement.parentElement.querySelector('.form-message');
+                    var errorElement = getParent(inputElement, options.formGroupSelector).querySelector('.form-message');
                     errorElement.innerText = '';
-                    inputElement.parentElement.classList.remove('invalid');
+                    getParent(inputElement, options.formGroupSelector).classList.remove('invalid');
                 }
-            }
+
+                //todo sử dụng onchange để xử lý việc khi người dùng chọn option tỉnh thành default, nó sẽ báo lỗi ngay chứ k đợi đến khi blur ra ngoài.
+            })
         })
     }
 }
@@ -104,7 +147,7 @@ Validator.isRequired = function (selector, message) {
     return {
         selector: selector,
         test: function(value) {
-            return value.trim() ? undefined : message || "Vui lòng nhập trường này"
+            return value ? undefined : message || "Vui lòng nhập trường này"
         }
     };
 }
