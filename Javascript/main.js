@@ -1,3 +1,10 @@
-var coursesList = document.querySelector('.courses-list');
+const courses = [
+    {name: 'HTML, CSS'},
+    {name: 'Responsive web design'},
+    {name: 'ReactJS'},
+]
 
-console.log([coursesList]);
+const ul = courses.map(course => `<li>${course.name}</li>`)
+
+console.log(ul)
+    

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+
+</head>
+<body>
+    <div id="root"></div>
+
+    <div className="post-list">
+        
+    </div>
+    
+    <script type="text/babel">
+        // HTML DOM
+        // const divDOM = document.createElement('div');
+        // const h2DOM = document.createElement('h2');
+        // const pDOM = document.createElement('p');
+
+        // divDOM.className = 'post-item'
+        // h2DOM.title = 'Học React tại F8'
+        // h2DOM.innerText = 'Học ReactJS'
+        // pDOM.innerText = 'Học ReactJS từ cơ bản tới nâng cao'
+
+        // document.body.appendChild(divDOM);
+        // divDOM.appendChild(h2DOM)
+        // divDOM.appendChild(pDOM)
+
+        //React element
+        const postItem = React.createElement('div',{
+            className: 'post-item'
+        },
+        React.createElement('h2',{title: 'Học React tại F8'}, 'Học ReactJS'),
+        React.createElement('p',null, 'Học ReactJS từ cơ bản tới nâng cao')
+        )
+
+        //More React element exercise
+        const ulExercise = React.createElement('ul', {}, 
+        React.createElement('li', {}, 'Javascript'),
+        React.createElement('li', {}, 'ReactJS')
+        )
+
+        //More React element exercise 2
+        const courses = [
+            {name: 'HTML, CSS'},
+            {name: 'Responsive web design'},
+            {name: 'ReactJS'},
+        ]
+
+        const ul = <ul>
+            {courses.map(course => <li>${course.name}</li>)}
+        </ul>
+
+        //Courses data
+        // 20230625094427
+        // https://api-gateway.fullstack.edu.vn/api/pro-courses
+
+        //API, có thể là từ backend hoặc thuộc sỡ hữu từ khách hàng
+        const coursesData =  [
+            {
+            "id": 15,
+            "title": "HTML CSS Pro",
+            "slug": "htmlcss",
+            "description": "Từ cơ bản tới chuyên sâu, thực hành 8 dự án, hàng trăm bài tập, trang hỏi đáp riêng, cấp chứng chỉ sau khóa học và mua một lần học mãi mãi.",
+            "image": "courses/15/62f13d2424a47.png",
+            "icon": "courses/15/62385d6c63dfa.png",
+            "video_type": "upload",
+            "video": null,
+            "old_price": 2499000,
+            "price": 1299000,
+            "pre_order_price": 699000,
+            "students_count": 2208,
+            "is_pro": true,
+            "is_coming_soon": false,
+            "is_selling": true,
+            "published_at": "2022-08-18T17:00:00.000000Z",
+            "is_registered": false,
+            "user_progress": 0,
+            "last_completed_at": null,
+            "image_url": "https://files.fullstack.edu.vn/f8-prod/courses/15/62f13d2424a47.png",
+            "icon_url": "https://files.fullstack.edu.vn/f8-prod/courses/15/62385d6c63dfa.png",
+            "video_url": "",
+            "landing_page_url": "/landing/htmlcss",
+            "is_pre_order": false,
+            "is_published": true
+            },
+            {
+            "id": 19,
+            "title": "JavaScript Pro",
+            "slug": "javascript-pro",
+            "description": "Khóa học JavaScript Pro",
+            "image": "courses/19/62f13cb607b4b.png",
+            "icon": "courses/19/62f13cb685c81.png",
+            "video_type": "upload",
+            "video": null,
+            "old_price": 0,
+            "price": 0,
+            "pre_order_price": 0,
+            "students_count": 0,
+            "is_pro": true,
+            "is_coming_soon": true,
+            "is_selling": false,
+            "published_at": "2023-07-31T17:00:00.000000Z",
+            "is_registered": false,
+            "user_progress": 0,
+            "last_completed_at": null,
+            "image_url": "https://files.fullstack.edu.vn/f8-prod/courses/19/62f13cb607b4b.png",
+            "icon_url": "https://files.fullstack.edu.vn/f8-prod/courses/19/62f13cb685c81.png",
+            "video_url": "",
+            "landing_page_url": "/landing/javascript-pro",
+            "is_pre_order": false,
+            "is_published": false
+            },
+            {
+            "id": 20,
+            "title": "NextJS Pro",
+            "slug": "reactjs-pro",
+            "description": "Khóa học NextJS Pro",
+            "image": "courses/20/648020fc16597.png",
+            "icon": "courses/20/648020fcc8000.png",
+            "video_type": "upload",
+            "video": null,
+            "old_price": 0,
+            "price": 0,
+            "pre_order_price": 0,
+            "students_count": 0,
+            "is_pro": true,
+            "is_coming_soon": true,
+            "is_selling": false,
+            "published_at": "2023-11-30T17:00:00.000000Z",
+            "is_registered": false,
+            "user_progress": 0,
+            "last_completed_at": null,
+            "image_url": "https://files.fullstack.edu.vn/f8-prod/courses/20/648020fc16597.png",
+            "icon_url": "https://files.fullstack.edu.vn/f8-prod/courses/20/648020fcc8000.png",
+            "video_url": "",
+            "landing_page_url": "/landing/reactjs-pro",
+            "is_pre_order": false,
+            "is_published": false
+            },
+            {
+            "id": 24,
+            "title": "NodeJS Pro",
+            "slug": "nodejs-pro",
+            "description": "NodeJS Pro",
+            "image": "courses/24/648021c0652c6.png",
+            "icon": "courses/24/648021c0cd73f.png",
+            "video_type": "upload",
+            "video": null,
+            "old_price": 0,
+            "price": 0,
+            "pre_order_price": 0,
+            "students_count": 0,
+            "is_pro": true,
+            "is_coming_soon": true,
+            "is_selling": false,
+            "published_at": "2024-04-06T06:20:00.000000Z",
+            "is_registered": false,
+            "user_progress": 0,
+            "last_completed_at": null,
+            "image_url": "https://files.fullstack.edu.vn/f8-prod/courses/24/648021c0652c6.png",
+            "icon_url": "https://files.fullstack.edu.vn/f8-prod/courses/24/648021c0cd73f.png",
+            "video_url": "",
+            "landing_page_url": "/landing/nodejs-pro",
+            "is_pre_order": false,
+            "is_published": false
+            }
+        ]
+
+        //Courses item
+        function CourseItem({course, title, image_url, description, students_count, onClick}) {
+            return (
+                <div className="post-item">
+                    <h2 className="post-title"
+                        onClick={() => onClick(course)}
+                    >{title}</h2>
+                    <img src={image_url} />
+                    <p className="post-desc">{description}</p>
+                    <p className="post-desc">Học sinh đăng ký {students_count}</p>
+                </div>
+            )
+        }
+
+        //Container
+        function App() {
+
+            // Khái niện useCallback
+            const handleClick = (course) => {
+                console.log(course.title)
+            }
+            //* progress: 26.00
+            return (
+                <div className="wrapper">
+
+                    {coursesData.map(course => 
+                        <CourseItem
+                        course={course}
+                        key={course.id}
+                        title = {course.title}
+                        image_url = {course.image_url}
+                        description = {course.description}
+                        students_count = {course.students_count}
+                        onClick={handleClick}
+                        />
+                    )}
+                </div>
+            )
+        }
+
+        
+
+        //Get root element
+        const container = document.getElementById('root');
+
+        // React 17
+        // React-DOM -> render UI
+        // ReactDOM.render(postItem, root)
+
+        //React 18
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
